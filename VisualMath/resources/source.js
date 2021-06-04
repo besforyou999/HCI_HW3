@@ -3,7 +3,7 @@ const parser = math.parser();
 const SYMBOL_WIDTH = 50;
 const SYMBOL_HEIGHT = 50;
 
-const BUTTON_BOX_WIDTH = 100;
+const BUTTON_BOX_WIDTH = 200;
 
 let MathApp = {};
 
