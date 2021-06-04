@@ -5,6 +5,7 @@ const SYMBOL_HEIGHT = 50;
 
 const BUTTON_BOX_WIDTH = 200;
 
+
 let MathApp = {};
 
 MathApp.symbol_paths = {
@@ -37,7 +38,10 @@ MathApp.mouse_drag_prev = {x:0, y:0};
 MathApp.block_types = {
     UNDEFINED:  "undefind",
     SYMBOL:     "symbol",
+    BUTTON:     "button"
 };
+
+
 
 MathApp.initialize = function() {
     for(let i=0; i <= 9; i++)
@@ -77,7 +81,12 @@ MathApp.initialize = function() {
         let p = {x: event.pageX, y: event.pageY};
         MathApp.handleMouseMove(p);
     });
+
+ 
+    initButtons();
+    
 }
+
 
 MathApp.handleKeyPress = function(key) {
     if (key in this.symbol_paths) 
@@ -107,14 +116,18 @@ MathApp.handleMouseDown = function(window_p) {
         }
 
         let block = MathApp.findBlockOn(canvas_p);
-        if(block != null)
+        if(block != null && block.type == MathApp.block_types.SYMBOL)
         {
             MathApp.selected_block = block;
             MathApp.selected_block.onSelected();
+            MathApp.is_mouse_dragging = true;
+            MathApp.mouse_drag_prev = canvas_p;
+           
         }
-
-        MathApp.is_mouse_dragging = true;
-        MathApp.mouse_drag_prev = canvas_p;
+        else if (block != null && block.type == MathApp.block_types.BUTTON) {
+            console.log("tes");
+        }
+      
 
         MathApp.canvas.requestRenderAll();
     }
@@ -129,6 +142,8 @@ MathApp.handleMouseMove = function(window_p) {
     if(MathApp.is_mouse_dragging)
     {
         let canvas_p = MathApp.transformToCanvasCoords(window_p);
+
+
         if(MathApp.selected_block != null)
         {
             let tx = canvas_p.x - MathApp.mouse_drag_prev.x;
@@ -185,10 +200,8 @@ MathApp.findBlockOn = function(canvas_p) {
     {
         let block = this.blocks[i];
 
-        if( x >= block.position.x - block.size.width/2 &&
-            x <= block.position.x + block.size.width/2 &&
-            y >= block.position.y - block.size.height/2 &&
-            y <= block.position.y + block.size.height/2 )
+        if( x >= block.position.x - block.size.width/2 && x <= block.position.x + block.size.width/2 &&
+            y >= block.position.y - block.size.height/2 && y <= block.position.y + block.size.height/2 )
         {
             return block;
         }               
@@ -323,7 +336,90 @@ MathApp.Symbol = function(position, size, name) {
 MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
 
 
+
+MathApp.Button = function(position, size, name) {    
+    MathApp.Block.call(this, position, size);
+    this.type = MathApp.block_types.BUTTON;
+    this.name = name;    
+
+    let block = this;
+
+    let background = new fabric.Rect({
+        left: position.x,
+        top: position.y,
+        width: size.width,
+        height: size.height,
+        fill: 'white',
+        stroke: 'black',
+        strokeWidth: 3,
+        selectable: false
+    });
+
+    let text = new fabric.Text(name, {
+        left: position.x + 5,
+        top: position.y + 15,
+        selectable: false,
+        fontFamily: 'System',
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        stroke: 'black',
+        fill: 'black'
+    });
+  
+    MathApp.canvas.add(background);
+    MathApp.canvas.add(text);
+
+    block.visual_items.push(background);
+    block.visual_items.push(text);
+
+}
+
+
+MathApp.Button.prototype = Object.create(MathApp.Block.prototype);
+
+
 //
+function initButtons() {
+    let size = {
+        width : 120,
+        height: 50
+    };
+
+    let position1 = {
+        x : 890,
+        y : 100
+    }
+
+    let position2 = {
+        x : 890,
+        y : 200
+    }
+
+    let position3 = {
+        x : 890,
+        y : 300
+    }
+
+    let position4 = {
+        x : 890,
+        y : 400
+    }
+
+    let delete_button = new MathApp.Button(position1, size, "Delete");
+   
+    let duplicate_button = new MathApp.Button(position2, size, "Duplicate");
+    
+    let disassemble_button = new MathApp.Button(position3, size, "Disassemble");
+    
+    let execute_button = new MathApp.Button(position4, size, "Execute");
+}
+
+
+
 $(document).ready(function() {
-    MathApp.initialize();
+    MathApp.initialize();    
 });
+
+
+
