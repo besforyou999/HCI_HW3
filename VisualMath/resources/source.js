@@ -26,7 +26,18 @@ MathApp.symbol_paths = {
         '=':    "equal",
         '>':    "more",
         '<':    "less",
-        '!':    "exclamation"
+        '!':    "exclamation",
+        '%':    "percent",
+        '/':    "slash",
+        '^':    "pow",
+        "sin":  "sin",
+        "cos":  "cos",
+        "tan":  "tan",
+        "exp":  "exp",
+        "log":  "log",
+        "sqrt": "sqrt",
+        "pi":   "pi",
+        "number_e":    "number_e"        
 };
 
 MathApp.blocks = [];
@@ -41,6 +52,10 @@ MathApp.block_types = {
     BUTTON:     "button"
 };
 
+MathApp.button_types = {
+    OPERATION: "operation",
+    SUPPORT: "support"
+}
 
 
 MathApp.initialize = function() {
@@ -96,8 +111,8 @@ MathApp.handleKeyPress = function(key) {
             height : SYMBOL_HEIGHT
         };
         let position = {
-            x : Math.random() * (this.canvas.width-size.width - BUTTON_BOX_WIDTH) + size.width/2,
-            y : Math.random() * (this.canvas.height-size.height) + size.height/2
+            x : Math.random() * (this.canvas.width - size.width - BUTTON_BOX_WIDTH) + size.width/2,
+            y : Math.random() * (this.canvas.height - size.height) + size.height/2
         };
 
         let new_symbol = new MathApp.Symbol(position, size, key);
@@ -108,7 +123,8 @@ MathApp.handleMouseDown = function(window_p) {
     if(MathApp.isInCanvas(window_p))
     {
         let canvas_p = MathApp.transformToCanvasCoords(window_p);
-
+        let mem_selected_block = MathApp.selected_block;
+        // 일단 다 초기화. 선택블록도 초기화
         if( MathApp.selected_block != null )
         {
             MathApp.selected_block.onDeselected();
@@ -116,7 +132,8 @@ MathApp.handleMouseDown = function(window_p) {
         }
 
         let block = MathApp.findBlockOn(canvas_p);
-        if(block != null && block.type == MathApp.block_types.SYMBOL)
+        
+        if(block != null && block.type == MathApp.block_types.SYMBOL) // 클릭된 블록이 심볼이라면
         {
             MathApp.selected_block = block;
             MathApp.selected_block.onSelected();
@@ -124,11 +141,11 @@ MathApp.handleMouseDown = function(window_p) {
             MathApp.mouse_drag_prev = canvas_p;
            
         }
-        else if (block != null && block.type == MathApp.block_types.BUTTON) {
-            console.log("tes");
-        }
-      
-
+        else if (block != null && block.type == MathApp.block_types.BUTTON ) { // 클릭 블록이 버튼이라면
+           block.translate({x:0, y:5});              
+           block.buttonOperation(mem_selected_block);           
+        }      
+        
         MathApp.canvas.requestRenderAll();
     }
     else
@@ -157,15 +174,22 @@ MathApp.handleMouseMove = function(window_p) {
 }
 
 MathApp.handleMouseUp = function(window_p) {
+
+    let canvas_p = MathApp.transformToCanvasCoords(window_p);
     if(MathApp.is_mouse_dragging)
     {
-        let canvas_p = MathApp.transformToCanvasCoords(window_p);
-
         MathApp.is_mouse_dragging = false;
         MathApp.mouse_drag_prev = {x:0, y:0};
 
-        MathApp.canvas.requestRenderAll();
+    }    
+    else if (!MathApp.is_mouse_dragging) {
+        let block = MathApp.findBlockOn(canvas_p);
+        if (block != null && block.type == MathApp.block_types.BUTTON) {
+            block.translate({x:0, y:-5});            
+         }
     }
+    MathApp.canvas.requestRenderAll();
+    
 }
 
 MathApp.transformToCanvasCoords = function(window_p) {
@@ -335,18 +359,17 @@ MathApp.Symbol = function(position, size, name) {
 
 MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
 
-
-
-MathApp.Button = function(position, size, name) {    
+MathApp.Button = function(position, size, name, opType) {    
     MathApp.Block.call(this, position, size);
     this.type = MathApp.block_types.BUTTON;
-    this.name = name;    
+    this.name = name;   
+    this.button_type = opType;
 
     let block = this;
 
     let background = new fabric.Rect({
-        left: position.x,
-        top: position.y,
+        left: position.x - size.width/2,
+        top: position.y - size.height/2,
         width: size.width,
         height: size.height,
         fill: 'white',
@@ -356,8 +379,8 @@ MathApp.Button = function(position, size, name) {
     });
 
     let text = new fabric.Text(name, {
-        left: position.x + 5,
-        top: position.y + 15,
+        left: position.x - size.width/3,
+        top: position.y - size.height/5,
         selectable: false,
         fontFamily: 'System',
         fontSize: 20,
@@ -372,12 +395,81 @@ MathApp.Button = function(position, size, name) {
 
     block.visual_items.push(background);
     block.visual_items.push(text);
-
 }
 
 
 MathApp.Button.prototype = Object.create(MathApp.Block.prototype);
 
+MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
+
+    let op = this.name;   
+
+    if (mem_selected_block == null && this.button_type == MathApp.button_types.OPERATION) {
+        return;
+    }
+    else if (mem_selected_block != null) {
+        MathApp.selected_block = mem_selected_block;
+        MathApp.selected_block.onSelected();    
+    }
+    switch(op) {
+        case "Delete" : {
+            MathApp.selected_block.destroy();
+            break;
+        }
+        case "Duplicate" : {
+            key = MathApp.selected_block.name;
+            makeSymbol(key);
+            break;
+        }
+        case "sin" : {
+            makeSymbol("sin");
+            break;
+        }
+        case "cos" : {
+            makeSymbol("cos");
+            break;
+        }
+        case "tan" : {
+            makeSymbol("tan");
+            break;
+        }
+        case "exp" : {
+            makeSymbol("exp");
+            break;
+        }
+        case "log" : {
+            makeSymbol("log");
+            break;
+        }
+        case "sqrt" : {
+            makeSymbol("sqrt");
+            break;
+        }
+        case "pi" : {
+            makeSymbol("pi");
+            break;
+        }
+        case "e" : {
+            makeSymbol("number_e");
+            break;
+        }
+    }
+   
+}
+
+function makeSymbol(key) {
+   
+    let size = {
+        width : SYMBOL_WIDTH,
+        height : SYMBOL_HEIGHT
+    };
+    let position = {
+        x : Math.random() * (MathApp.canvas.width - size.width - BUTTON_BOX_WIDTH) + size.width/2,
+        y : Math.random() * (MathApp.canvas.height - size.height) + size.height/2
+    };
+
+    let new_symbol = new MathApp.Symbol(position, size, key);
+}
 
 //
 function initButtons() {
@@ -387,32 +479,54 @@ function initButtons() {
     };
 
     let position1 = {
-        x : 890,
-        y : 100
+        x : 950,
+        y : 50
     }
 
     let position2 = {
-        x : 890,
-        y : 200
+        x : 950,
+        y : 120
     }
 
     let position3 = {
-        x : 890,
-        y : 300
+        x : 950,
+        y : 190
     }
 
     let position4 = {
-        x : 890,
-        y : 400
+        x : 950,
+        y : 260
     }
 
-    let delete_button = new MathApp.Button(position1, size, "Delete");
+    let operation =  MathApp.button_types.OPERATION;
+    let support = MathApp.button_types.SUPPORT;
+
+
+    let delete_button = new MathApp.Button(position1, size, "Delete", operation);
    
-    let duplicate_button = new MathApp.Button(position2, size, "Duplicate");
+    let duplicate_button = new MathApp.Button(position2, size, "Duplicate",operation);
     
-    let disassemble_button = new MathApp.Button(position3, size, "Disassemble");
+    let disassemble_button = new MathApp.Button(position3, size, "Disassemble",operation);
     
-    let execute_button = new MathApp.Button(position4, size, "Execute");
+    let execute_button = new MathApp.Button(position4, size, "Execute",operation);
+
+    let sin = new MathApp.Button({x: 910, y:340}, {width: 60, height: 50}, "sin",support);
+
+    let cos = new MathApp.Button({x: 980, y:340}, {width: 60, height: 50}, "cos",support);
+
+    let tan = new MathApp.Button({x: 910, y:410}, {width: 60, height: 50}, "tan",support);
+
+    let exp = new MathApp.Button({x: 980, y:410}, {width: 60, height: 50}, "exp",support);
+
+    let log = new MathApp.Button({x: 910, y:480}, {width: 60, height: 50}, "log",support);
+
+    let sqrt = new MathApp.Button({x: 980, y:480}, {width: 60, height: 50}, "sqrt",support);
+
+    let pi = new MathApp.Button({x: 910, y:560}, {width: 60, height: 50}, "pi",support);
+
+    let e = new MathApp.Button({x: 980, y:560}, {width: 60, height: 50}, "e",support);
+
+
 }
 
 
