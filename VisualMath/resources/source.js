@@ -54,7 +54,8 @@ MathApp.mouse_drag_prev = {x:0, y:0};
 MathApp.block_types = {
     UNDEFINED:  "undefind",
     SYMBOL:     "symbol",
-    BUTTON:     "button"
+    BUTTON:     "button",
+    MULTIBLOCK: "multiblock"
 };
 
 MathApp.button_types = {
@@ -101,7 +102,6 @@ MathApp.initialize = function() {
         let p = {x: event.pageX, y: event.pageY};
         MathApp.handleMouseMove(p);
     });
-
  
     initOperationButtons();
     initSupportButtons();
@@ -138,14 +138,20 @@ MathApp.handleMouseDown = function(window_p) {
         }
 
         let block = MathApp.findBlockOn(canvas_p);
-        
-        if(block != null && block.type == MathApp.block_types.SYMBOL) // 클릭된 블록이 심볼이라면
-        {
+       
+        if(block != null && block.type == MathApp.block_types.SYMBOL) // 클릭된 블록이 심볼, 혹은 멀티블록이라면
+        {           
             MathApp.selected_block = block;
             MathApp.selected_block.onSelected();
             MathApp.is_mouse_dragging = true;
-            MathApp.mouse_drag_prev = canvas_p;
-           
+            MathApp.mouse_drag_prev = canvas_p;           
+        }
+        else if (block != null && block.type == MathApp.block_types.MULTIBLOCK) {
+            console.log(block.type);
+            MathApp.selected_block = block;
+            MathApp.selected_block.onSelected();
+            MathApp.is_mouse_dragging = true;
+            MathApp.mouse_drag_prev = canvas_p;     
         }
         else if (block != null && block.type == MathApp.block_types.BUTTON ) { // 클릭 블록이 버튼이라면
            block.translate({x:0, y:5});              
@@ -166,7 +172,6 @@ MathApp.handleMouseMove = function(window_p) {
     {
         let canvas_p = MathApp.transformToCanvasCoords(window_p);
 
-
         if(MathApp.selected_block != null)
         {
             let tx = canvas_p.x - MathApp.mouse_drag_prev.x;
@@ -181,19 +186,26 @@ MathApp.handleMouseMove = function(window_p) {
 
 MathApp.handleMouseUp = function(window_p) {
 
-    let canvas_p = MathApp.transformToCanvasCoords(window_p);
-    if(MathApp.is_mouse_dragging)
+    let canvas_p = MathApp.transformToCanvasCoords(window_p);    
+    
+    if(MathApp.is_mouse_dragging) // 드래그하고 있는 경우
     {
         MathApp.is_mouse_dragging = false;
-        MathApp.mouse_drag_prev = {x:0, y:0};
-
+        MathApp.mouse_drag_prev = {x:0, y:0};        
+       
+        let leftBlock = MathApp.findBlockOnLeft(canvas_p);
+        if (MathApp.selected_block != leftBlock && leftBlock != null) {            
+            assemble(leftBlock);
+        }
     }    
-    else if (!MathApp.is_mouse_dragging) {
-        let block = MathApp.findBlockOn(canvas_p);
+    else if (!MathApp.is_mouse_dragging) { // 드래그하고 있지 않은 경우 
+        let block = MathApp.findBlockOn(canvas_p);      
         if (block != null && block.type == MathApp.block_types.BUTTON) {
             block.translate({x:0, y:-5});            
-         }
+        }
     }
+
+
     MathApp.canvas.requestRenderAll();
     
 }
@@ -229,9 +241,25 @@ MathApp.findBlockOn = function(canvas_p) {
     for(let i=0; i < this.blocks.length; i++)
     {
         let block = this.blocks[i];
+        
+        if( x >= block.position.x - 25 && x <= block.position.x + block.size.width - 25 &&
+            y >= block.position.y - 25  && y <= block.position.y + 25 )
+        {
+            return block;
+        }               
+    }
+    return null;
+}
 
-        if( x >= block.position.x - block.size.width/2 && x <= block.position.x + block.size.width/2 &&
-            y >= block.position.y - block.size.height/2 && y <= block.position.y + block.size.height/2 )
+MathApp.findBlockOnLeft = function(canvas_p) {
+    let x = canvas_p.x;
+    let y = canvas_p.y;
+
+    for(let i=0; i < this.blocks.length; i++)
+    {
+        let block = this.blocks[i];
+
+        if( x >= block.position.x + block.size.width/2 && x <= block.position.x + block.size.width * 2  &&  y >= block.position.y - block.size.height/2 && y <= block.position.y + block.size.height/2 )
         {
             return block;
         }               
@@ -244,28 +272,31 @@ MathApp.Block = function(position, size) {
     this.position = position;
     this.size = size;
     this.type = MathApp.block_types.UNDEFINED;
-
+    this.numberOfSymbols;
     this.visual_items = [];
 
     MathApp.blocks.push(this);
 }
 
+//테두리색을 바꿈
 MathApp.Block.prototype.onDeselected = function() {
-    this.visual_items[this.visual_items.length-1].set({
-        stroke: "rgba(0,0,255,1)"
-    });
+   
+    for (var i = 0; i < this.visual_items.length ; i++) {
+        this.visual_items[i].set({  stroke: "rgba(0,0,255,1)" });        
+     }
 }
-
+//테두리 색을 바꾸고 캔버스 맨위에 배치
 MathApp.Block.prototype.onSelected = function() {
-    this.visual_items[this.visual_items.length-1].set({
-        stroke: "rgba(255,0,0,1)"
-    });
+
+    for (var i = 0; i < this.visual_items.length ; i++) {
+       this.visual_items[i].set({ stroke: "rgba(255,0,0,1)" });        
+    }
 
     this.visual_items.forEach(item => {
-        MathApp.canvas.bringToFront(item);
+        MathApp.canvas.bringToFront(item);        
     });
 }
-
+// p값과 현재 위치를 뺀 값만큼 이동
 MathApp.Block.prototype.moveTo = function(p) {
     let tx = p.x - this.position.x;
     let ty = p.y - this.position.y;
@@ -273,6 +304,7 @@ MathApp.Block.prototype.moveTo = function(p) {
     this.translate({x: tx, y: ty});
 }
 
+//블록의 모든 비주얼 아이템의 위치를 v 만큼 이동시킴
 MathApp.Block.prototype.translate = function(v) {
     this.position.x += v.x;
     this.position.y += v.y;
@@ -282,7 +314,7 @@ MathApp.Block.prototype.translate = function(v) {
         item.top += v.y;
     });
 }
-
+// 선택된 블록이 이 메소드를 호출한 블록이라면 선택 블록을 null 로 설정하고 모든 비주얼 아이템을 캔버스에서 제거, blocks 배열에서 해당 블록의 인덱스를 찾고 빼냄
 MathApp.Block.prototype.destroy = function() {
     if(this == MathApp.selected_block)
     {
@@ -302,12 +334,132 @@ MathApp.Block.prototype.destroy = function() {
     }
 }
 
-// 
+function assemble(leftBlock) {
+
+    let newPos = leftBlock.position;
+
+    if (MathApp.selected_block.type == MathApp.block_types.SYMBOL && leftBlock.type == MathApp.block_types.SYMBOL) {
+        let sizes = [];
+        let names = [];
+
+        sizes.push(leftBlock.size);
+        sizes.push(MathApp.selected_block.size);
+        names.push(leftBlock.name);
+        names.push(MathApp.selected_block.name);
+      
+        let size = {
+            width : 0,
+            height: 0
+        };
+
+        sizes.forEach(i => {
+            size.width += i.width ;
+            size.height += i.height;
+        });
+      
+
+        leftBlock.destroy();
+        MathApp.selected_block.destroy();
+
+        let newMultiBlock = new MathApp.MultiBlock(newPos,sizes,names,size);
+        
+    }
+    
+}
+
+// position : 시작 위치 받음, size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
+MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
+    MathApp.Block.call(this,position,size);
+    this.type = MathApp.block_types.MULTIBLOCK;    
+    this.position = position;
+    this.sizes = sizes;
+    this.names = names;    
+   
+    let block = this;
+    let Pos = {
+        x: position.x,
+        y: position.y
+    }
+    
+    this.numberOfSymbols = names.length;
+
+    for (var i = 0; i < names.length ; i++) {
+        
+        if (names[i] in MathApp.symbol_paths) 
+        {           
+            let w = sizes[i].width;
+            let h = sizes[i].height;
+
+            let newPos = Pos;
+
+            newPos.x +=  w * i;                       
+            
+            let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
+            
+            fabric.Image.fromURL(path, function(img) {                // (0) Background
+                                 
+                // (1) Image
+                img.scaleToWidth(w);
+                img.scaleToHeight(h);
+    
+                let img_w = img.getScaledWidth();
+                let img_h = img.getScaledHeight();
+    
+                img.set({
+                    left: newPos.x - img_w/2,
+                    top: newPos.y - img_h/2,
+                    selectable: false
+                });                    
+                 
+                MathApp.canvas.add(img);
+                block.visual_items.push(img);      
+            });
+            
+             let background = new fabric.Rect({
+                    left: newPos.x - w/2,
+                    top: newPos.y -h/2,
+                    width: w,
+                    height: h,
+                    fill: "rgba(255,255,255,1)",
+                    stroke: "rgba(0,0,0,0)",
+                    selectable: false
+            });
+
+            let boundary = new fabric.Rect({
+                left: newPos.x - w/2,
+                top: newPos.y - h/2,
+                width: w,
+                height: h,
+                fill: "rgba(0,0,0,0)",
+                stroke: "rgba(0,0,255,1)",
+                strokeWidth: 5,
+                selectable: false
+            });
+          
+            MathApp.canvas.add(background);
+            MathApp.canvas.add(boundary);
+
+            block.visual_items.push(background);
+            block.visual_items.push(boundary);
+
+            
+        }
+    }
+    
+   
+    
+       
+}
+
+MathApp.MultiBlock.prototype = Object.create(MathApp.Block.prototype);
+
+
+// 블록 생성자를 상속. 매개변수로 주어진 이름에 해당하는 사진, 바탕, 테두리 를 생성하여 비주얼 아이템에 push, canvas에 생성한 객체들 푸시
 MathApp.Symbol = function(position, size, name) {
     MathApp.Block.call(this, position, size);
     this.type = MathApp.block_types.SYMBOL;
     this.name = name;
-
+    this.numberOfSymbols = 1;
     let block = this;
 
     if (name in MathApp.symbol_paths) 
@@ -350,12 +502,10 @@ MathApp.Symbol = function(position, size, name) {
                 selectable: false
             });
 
-            //
             MathApp.canvas.add(background);
             MathApp.canvas.add(img);
             MathApp.canvas.add(boundary);
 
-            //
             block.visual_items.push(background);
             block.visual_items.push(img);
             block.visual_items.push(boundary);
@@ -365,12 +515,20 @@ MathApp.Symbol = function(position, size, name) {
 
 MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
 
+MathApp.Symbol.prototype.GetName = function() {
+    return this.name;
+}
+
+MathApp.Symbol.prototype.GetSize = function() {
+    return this.size;
+}
+
 MathApp.Button = function(position, size, name, opType) {    
     MathApp.Block.call(this, position, size);
     this.type = MathApp.block_types.BUTTON;
     this.name = name;   
     this.button_type = opType;
-
+    this.numberOfSymbols = 1;
     let block = this;
 
     let background = new fabric.Rect({
