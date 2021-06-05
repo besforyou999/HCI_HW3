@@ -3,8 +3,7 @@ const parser = math.parser();
 const SYMBOL_WIDTH = 50;
 const SYMBOL_HEIGHT = 50;
 
-const BUTTON_BOX_WIDTH = 200;
-
+const BUTTON_BOX_WIDTH = 300;
 
 let MathApp = {};
 
@@ -37,7 +36,13 @@ MathApp.symbol_paths = {
         "log":  "log",
         "sqrt": "sqrt",
         "pi":   "pi",
-        "number_e":    "number_e"        
+        "number_e": "number_e",
+        "cross":    "cross",
+        "dot":      "dotProduct",
+        "det":      "det",
+        "inv":      "inv",
+        "multiply": "multiply"
+
 };
 
 MathApp.blocks = [];
@@ -98,8 +103,9 @@ MathApp.initialize = function() {
     });
 
  
-    initButtons();
-    
+    initOperationButtons();
+    initSupportButtons();
+    initVectorMatrixButtons();
 }
 
 
@@ -453,15 +459,39 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
             makeSymbol("number_e");
             break;
         }
+        case "Cross" : {
+            makeSymbol("cross");
+            break;
+        }
+        case "Dot Product" : {
+            makeSymbol("dot");
+            break;
+        }
+        case "Determinant" : {
+            makeSymbol("det");
+            break;
+        }
+        case "Inverse" : {
+            makeSymbol("inv");
+            break;
+        }
+        case "Multiply" : {
+            makeSymbol("multiply", {width: 30, height:0});
+            break;
+        }
     }
    
 }
 
-function makeSymbol(key) {
+function makeSymbol(key, ssize) {
    
+    if (ssize == null || ssize == undefined) {
+        ssize = { width : 0, height: 0};
+    }
+
     let size = {
-        width : SYMBOL_WIDTH,
-        height : SYMBOL_HEIGHT
+        width : SYMBOL_WIDTH + ssize.width,
+        height : SYMBOL_HEIGHT + ssize.height
     };
     let position = {
         x : Math.random() * (MathApp.canvas.width - size.width - BUTTON_BOX_WIDTH) + size.width/2,
@@ -472,20 +502,28 @@ function makeSymbol(key) {
 }
 
 //
-function initButtons() {
+function initOperationButtons() {
+
     let size = {
         width : 120,
         height: 50
     };
 
+    let position = [];
+    
+    let position0 = {
+        x: 900,
+        y: 0
+    }
+
     let position1 = {
-        x : 950,
-        y : 50
+        x: 950,
+        y: 50
     }
 
     let position2 = {
-        x : 950,
-        y : 120
+        x: 950,
+        y: 120
     }
 
     let position3 = {
@@ -498,37 +536,159 @@ function initButtons() {
         y : 260
     }
 
-    let operation =  MathApp.button_types.OPERATION;
-    let support = MathApp.button_types.SUPPORT;
+    position.push(position0);
+    position.push(position1);
+    position.push(position2);
+    position.push(position3);
+    position.push(position4);
 
+    let positioning = {
+        x: -30 , y : 20
+    }
+
+    for (var i = 0 ; i < position.length ; i++) {
+        position[i].x += positioning.x;
+        position[i].y += positioning.y;
+    }    
+
+    let operation =  MathApp.button_types.OPERATION;   
+
+    let operation_label = new MathApp.Text(position0, {width: 60, height: 50}, "Operation Buttons",20);
 
     let delete_button = new MathApp.Button(position1, size, "Delete", operation);
    
     let duplicate_button = new MathApp.Button(position2, size, "Duplicate",operation);
-    
+   
     let disassemble_button = new MathApp.Button(position3, size, "Disassemble",operation);
     
     let execute_button = new MathApp.Button(position4, size, "Execute",operation);
 
-    let sin = new MathApp.Button({x: 910, y:340}, {width: 60, height: 50}, "sin",support);
 
-    let cos = new MathApp.Button({x: 980, y:340}, {width: 60, height: 50}, "cos",support);
+}
 
-    let tan = new MathApp.Button({x: 910, y:410}, {width: 60, height: 50}, "tan",support);
 
-    let exp = new MathApp.Button({x: 980, y:410}, {width: 60, height: 50}, "exp",support);
+function initSupportButtons() {
 
-    let log = new MathApp.Button({x: 910, y:480}, {width: 60, height: 50}, "log",support);
+    let support = MathApp.button_types.SUPPORT;
 
-    let sqrt = new MathApp.Button({x: 980, y:480}, {width: 60, height: 50}, "sqrt",support);
+    let size = {
+        width: 60, height : 50
+    }
 
-    let pi = new MathApp.Button({x: 910, y:560}, {width: 60, height: 50}, "pi",support);
+    let position = [];
+    
+    let position0 = { x:  910,  y : 340 }
+    let position1 = { x:  980,  y : 340 }
+    let position2 = { x:  910,  y : 410 }
+    let position3 = { x : 980,  y : 410 }
+    let position4 = { x : 910,  y : 480 }
+    let position5 = { x : 980,  y : 480 }
+    let position6 = { x : 910,  y : 560 }
+    let position7 = { x : 980,  y : 560 }
+    let label_position1 = {x: 910, y : 320};
+    let label_position2 = {x: 910, y : 340};
 
-    let e = new MathApp.Button({x: 980, y:560}, {width: 60, height: 50}, "e",support);
+    position.push(position0);
+    position.push(position1);
+    position.push(position2);
+    position.push(position3);
+    position.push(position4);
+    position.push(position5);
+    position.push(position6);
+    position.push(position7);
+    //position.push(label_position);
+
+    let positioning = {
+        x: -30 , y : 40
+    }
+
+    for (var i = 0 ; i < position.length ; i++) {
+        position[i].x += positioning.x;
+        position[i].y += positioning.y;
+    }    
+    
+    let support_button = new MathApp.Text(label_position1, size, "Constant and ",15);
+    let support_button2 = new MathApp.Text(label_position2 , size, "predefined functions",15);
+
+    let sin = new MathApp.Button(position0, size, "sin",support);
+
+    let cos = new MathApp.Button(position1, size, "cos",support);
+
+    let tan = new MathApp.Button(position2, size, "tan",support);
+
+    let exp = new MathApp.Button(position3, size, "exp",support);
+
+    let log = new MathApp.Button(position4, size, "log",support);
+
+    let sqrt = new MathApp.Button(position5, size, "sqrt",support);
+
+    let pi = new MathApp.Button(position6, size, "pi",support);
+
+    let e = new MathApp.Button(position7, size, "e",support);
 
 
 }
 
+
+function initVectorMatrixButtons() {
+    
+    let support = MathApp.button_types.SUPPORT;
+
+    let size = { width : 100, height: 50 };
+    let position = [];
+    let position0 = { x: 870, y : 620 }
+    let position1 = { x: 840, y : 680 }
+    let position2 = { x: 950, y : 680 }
+    let position3 = { x: 840, y : 740 }
+    let position4 = { x: 950, y : 740 }
+    let position5 = { x: 840, y : 800}
+
+    position.push(position0);
+    position.push(position1);
+    position.push(position2);
+    position.push(position3);
+    position.push(position4);
+    position.push(position5);
+
+    let positioning = {
+        x: 0 , y : 30
+    }
+
+    for (var i = 0 ; i < position.length ; i++) {
+        position[i].y += positioning.y;
+    }    
+
+    let operation_label = new MathApp.Text(position0, {width: 60, height: 50}, "Vector & Matrix Buttons",15);
+
+    let delete_button = new MathApp.Button(position1, size, "Cross", support );
+   
+    let duplicate_button = new MathApp.Button(position2, size, "Dot Product",support);
+   
+    let disassemble_button = new MathApp.Button(position3, size, "Inverse",support);
+    
+    let execute_button = new MathApp.Button(position4, size, "Determinant",support);
+
+    let multiply_button = new MathApp.Button(position5, size, "Multiply", support)
+}
+
+MathApp.Text = function(position, size, name, fontSize) {    
+    
+    this.name = name;  
+ 
+    let text = new fabric.Text(name, {
+        left: position.x - size.width,
+        top: position.y - size.height/5,
+        selectable: false,
+        fontFamily: 'System',
+        fontSize: fontSize,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        stroke: 'black',
+        fill: 'black'
+    });
+    
+    MathApp.canvas.add(text);
+}
 
 
 $(document).ready(function() {
