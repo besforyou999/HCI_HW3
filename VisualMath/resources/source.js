@@ -376,10 +376,7 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     this.names = names;    
    
     let block = this;
-    let Pos = {
-        x: position.x,
-        y: position.y
-    }
+    let Pos = { x: position.x, y: position.y }
     
     this.numberOfSymbols = names.length;
 
@@ -393,29 +390,29 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
             let newPos = Pos;
 
             newPos.x +=  w * i;                       
+
             
             let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
             
-            fabric.Image.fromURL(path, function(img) {                // (0) Background
-                                 
-                // (1) Image
-                img.scaleToWidth(w);
-                img.scaleToHeight(h);
+            fabric.Image.fromURL(path, function(img) {                                             
+                // (1) Image               
+                    img.scaleToWidth(w);
+                    img.scaleToHeight(h);
     
-                let img_w = img.getScaledWidth();
-                let img_h = img.getScaledHeight();
-    
-                img.set({
-                    left: newPos.x - img_w/2,
-                    top: newPos.y - img_h/2,
-                    selectable: false
-                });                    
-                 
-                MathApp.canvas.add(img);
-                block.visual_items.push(img);      
-            });
-            
-             let background = new fabric.Rect({
+                    let img_w = img.getScaledWidth();
+                    let img_h = img.getScaledHeight();
+
+                    img.set({
+                        left: newPos.x - img_w/2,
+                        top : newPos.y - img_h/2,
+                        selectable: false
+                    });       
+                    MathApp.canvas.add(img);
+                    block.visual_items.push(img);     
+                   
+            });    
+
+            let background = new fabric.Rect({
                     left: newPos.x - w/2,
                     top: newPos.y -h/2,
                     width: w,
@@ -436,22 +433,24 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
                 selectable: false
             });
           
+           
+
             MathApp.canvas.add(background);
             MathApp.canvas.add(boundary);
 
             block.visual_items.push(background);
             block.visual_items.push(boundary);
-
             
         }
-    }
-    
-   
+    }  
     
        
 }
 
 MathApp.MultiBlock.prototype = Object.create(MathApp.Block.prototype);
+
+
+
 
 
 // 블록 생성자를 상속. 매개변수로 주어진 이름에 해당하는 사진, 바탕, 테두리 를 생성하여 비주얼 아이템에 push, canvas에 생성한 객체들 푸시
