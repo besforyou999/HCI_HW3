@@ -391,26 +391,20 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
 
             newPos.x +=  w * i;                       
 
-            
-            let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
-            
-            fabric.Image.fromURL(path, function(img) {                                             
-                // (1) Image               
-                    img.scaleToWidth(w);
-                    img.scaleToHeight(h);
-    
-                    let img_w = img.getScaledWidth();
-                    let img_h = img.getScaledHeight();
+            console.log(w);
+            console.log(h);
 
-                    img.set({
-                        left: newPos.x - img_w/2,
-                        top : newPos.y - img_h/2,
-                        selectable: false
-                    });       
-                    MathApp.canvas.add(img);
-                    block.visual_items.push(img);     
-                   
-            });    
+            let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
+           
+            fabric.Image.fromURL(path, function(img) {
+                img.scaleToWidth(37);
+                img.scaleToHeight(50);
+                MathApp.canvas.add(img).renderAll();
+                block.visual_items.push(img);
+            }, {
+                left: newPos.x - 37/2,
+                top : newPos.y - 23,
+            });
 
             let background = new fabric.Rect({
                     left: newPos.x - w/2,
