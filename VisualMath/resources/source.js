@@ -491,6 +491,38 @@ function duplication() {
 
 }
 
+function disassemble() {
+    if (MathApp.selected_block == null || MathApp.selected_block == undefined || MathApp.selected_block.type == MathApp.block_types.SYMBOL) return;
+
+    let sBlock = MathApp.selected_block;
+
+    var starting_position = sBlock.position;
+    var size_array = [];
+    var name_array = [];
+
+    sBlock.sizes.forEach(i=>{
+        size_array.push(i);       
+    });
+
+    sBlock.names.forEach(i => {
+        name_array.push(i);
+    });
+   
+    sBlock.destroy();          
+
+   
+        /*             
+        if (index != 0) {
+            starting_position.x += size_array[index];
+        }
+        */
+        let new_symbol = new MathApp.Symbol(starting_position, size_array[0], name_array[0]);
+               
+
+    
+    
+}
+
 // position : 시작 위치 받음, size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
 MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     MathApp.Block.call(this,position,size);
@@ -579,7 +611,8 @@ MathApp.Symbol = function(position, size, name) {
     let block = this;
 
     if (name in MathApp.symbol_paths) 
-    {
+    {       
+
         let path = "resources/" + MathApp.symbol_paths[name] + ".jpg";
         fabric.Image.fromURL(path, function(img) {
             // (0) Background
@@ -619,13 +652,15 @@ MathApp.Symbol = function(position, size, name) {
             });
 
             MathApp.canvas.add(background);
-            MathApp.canvas.add(img);
+            MathApp.canvas.add(img).renderAll();
             MathApp.canvas.add(boundary);
 
             block.visual_items.push(background);
             block.visual_items.push(img);
             block.visual_items.push(boundary);
         });
+
+      
     }
 }
 
@@ -702,6 +737,10 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
         }
         case "sin" : {
             makeSymbol("sin");
+            break;
+        }
+        case "Disassemble" : {
+            disassemble();
             break;
         }
         case "cos" : {
