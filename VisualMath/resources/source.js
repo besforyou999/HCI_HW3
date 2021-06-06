@@ -338,40 +338,55 @@ function assemble(leftBlock) {
     let newPos = leftBlock.position;
 
     if (MathApp.selected_block.type == MathApp.block_types.SYMBOL && leftBlock.type == MathApp.block_types.SYMBOL) {
-        let sizes = [];
-        let names = [];
+        let sizes = [] ,names = [];
 
         sizes.push(leftBlock.size);
         sizes.push(MathApp.selected_block.size);
         names.push(leftBlock.name);
         names.push(MathApp.selected_block.name);
       
-        let size = {
-            width : 0,
-            height: 0
-        };
+        let size = { width : 0, height: 0 };
 
         sizes.forEach(i => {
             size.width += i.width ;
             size.height += i.height;
         });
       
-
         leftBlock.destroy();
         MathApp.selected_block.destroy();
 
         let newMultiBlock = new MathApp.MultiBlock(newPos,sizes,names,size);
-        
     }
     else if (MathApp.selected_block.type == MathApp.block_types.SYMBOL && leftBlock.type == MathApp.block_types.MULTIBLOCK) {
         console.log("yes");
-        let sizes = [];
-        let names = [];
+        let size_array = [], name_array = [];
 
-        sizes.push(leftBlock.size);
-        sizes.push(MathApp.selected_block.size);
-        names.push(leftBlock.name);
-        names.push(MathApp.selected_block.name);
+
+        leftBlock.names.forEach(i =>{
+            name_array.push(i);
+        });
+
+        name_array.push(MathApp.selected_block.name);
+
+        leftBlock.sizes.forEach(i=>{
+            size_array.push(i);
+        });
+
+        size_array.push(MathApp.selected_block.size);
+      
+
+        let size = { width : 0, height: 0 };
+
+        size_array.forEach(i => {
+            size.width += i.width ;
+            size.height += i.height;
+        });
+       
+
+        leftBlock.destroy();
+        MathApp.selected_block.destroy();
+
+        let newMultiBlock = new MathApp.MultiBlock(newPos,size_array,name_array,size);
     }
     
 }
@@ -385,6 +400,13 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     this.sizes = sizes;
     this.names = names;    
    
+    let makeName;
+    names.forEach(i => {
+        makeName += i;
+    });
+
+    this.name = makeName;
+
     let block = this;
     let Pos = { x: position.x, y: position.y }
     
@@ -399,7 +421,7 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
 
             let newPos = Pos;
 
-            newPos.x +=  w * i;                       
+            if ( i != 0 ) newPos.x +=  w;
 
             let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
            
@@ -449,10 +471,6 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
 }
 
 MathApp.MultiBlock.prototype = Object.create(MathApp.Block.prototype);
-
-
-
-
 
 // 블록 생성자를 상속. 매개변수로 주어진 이름에 해당하는 사진, 바탕, 테두리 를 생성하여 비주얼 아이템에 push, canvas에 생성한 객체들 푸시
 MathApp.Symbol = function(position, size, name) {
