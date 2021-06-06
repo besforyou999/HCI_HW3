@@ -358,9 +358,8 @@ function assemble(leftBlock) {
         let newMultiBlock = new MathApp.MultiBlock(newPos,sizes,names,size);
     }
     else if (MathApp.selected_block.type == MathApp.block_types.SYMBOL && leftBlock.type == MathApp.block_types.MULTIBLOCK) {
-        console.log("yes");
-        let size_array = [], name_array = [];
 
+        let size_array = [], name_array = [];
 
         leftBlock.names.forEach(i =>{
             name_array.push(i);
@@ -382,6 +381,63 @@ function assemble(leftBlock) {
             size.height += i.height;
         });
        
+        leftBlock.destroy();
+        MathApp.selected_block.destroy();
+
+        let newMultiBlock = new MathApp.MultiBlock(newPos,size_array,name_array,size);
+    } else if (MathApp.selected_block.type == MathApp.block_types.MULTIBLOCK && leftBlock.type == MathApp.block_types.SYMBOL) {
+       
+        let size_array = [], name_array = [];
+
+        name_array.push(leftBlock.name);
+
+        MathApp.selected_block.names.forEach(i =>{
+            name_array.push(i);
+        });
+
+        size_array.push(leftBlock.size);
+
+        MathApp.selected_block.sizes.forEach(i =>{
+            size_array.push(i);
+        });
+
+        let size = { width : 0, height: 0 };
+
+        size_array.forEach(i => {
+            size.width += i.width ;
+            size.height += i.height;
+        });
+
+        leftBlock.destroy();
+        MathApp.selected_block.destroy();
+
+        let newMultiBlock = new MathApp.MultiBlock(newPos,size_array,name_array,size);
+    } else if (MathApp.selected_block.type == MathApp.block_types.MULTIBLOCK && leftBlock.type == MathApp.block_types.MULTIBLOCK) {
+         
+        let size_array = [], name_array = [];
+
+        leftBlock.names.forEach(i =>{
+            name_array.push(i);
+        });
+
+        MathApp.selected_block.names.forEach(i =>{
+            name_array.push(i);
+        });
+        
+        leftBlock.sizes.forEach(i =>{
+            size_array.push(i);
+        });
+
+        MathApp.selected_block.sizes.forEach(i =>{
+            size_array.push(i);
+        });
+
+        let size = { width : 0, height: 0 };
+
+        size_array.forEach(i => {
+            size.width += i.width ;
+            size.height += i.height;
+        });
 
         leftBlock.destroy();
         MathApp.selected_block.destroy();
@@ -389,6 +445,50 @@ function assemble(leftBlock) {
         let newMultiBlock = new MathApp.MultiBlock(newPos,size_array,name_array,size);
     }
     
+}
+
+function duplication() {
+
+    let s_block = MathApp.selected_block;
+
+    console.log(s_block.type);
+
+    let new_position = {
+        x: s_block.position.x,
+        y: s_block.position.y
+    };    
+    new_position.y += 70;
+
+    if (s_block.type == MathApp.block_types.SYMBOL) {
+        let newSize = s_block.size;
+        let newName = s_block.name;
+
+        let newBlock = new MathApp.Symbol(new_position, newSize, newName);
+    }
+    else if (s_block.type == MathApp.block_types.MULTIBLOCK) {
+
+        let size_array = [], name_array = [];
+        let newSizePar = {width : 0, height: 0};
+
+        s_block.sizes.forEach(i=>{
+            let newSize = {
+                width : i.width,
+                height: i.height
+            };
+
+            newSizePar.width += i.width;
+            newSizePar.height += i.height;
+            size_array.push(newSize);          
+        });
+
+        s_block.names.forEach(i=>{
+            name_array.push(i);
+        });
+
+        let newBlock = new MathApp.MultiBlock(new_position, size_array, name_array, newSizePar);
+    }
+
+
 }
 
 // position : 시작 위치 받음, size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
@@ -455,8 +555,6 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
                 strokeWidth: 5,
                 selectable: false
             });
-          
-           
 
             MathApp.canvas.add(background);
             MathApp.canvas.add(boundary);
@@ -599,8 +697,7 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
             break;
         }
         case "Duplicate" : {
-            key = MathApp.selected_block.name;
-            makeSymbol(key);
+            duplication();
             break;
         }
         case "sin" : {
