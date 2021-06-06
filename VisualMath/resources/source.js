@@ -147,7 +147,6 @@ MathApp.handleMouseDown = function(window_p) {
             MathApp.mouse_drag_prev = canvas_p;           
         }
         else if (block != null && block.type == MathApp.block_types.MULTIBLOCK) {
-            console.log(block.type);
             MathApp.selected_block = block;
             MathApp.selected_block.onSelected();
             MathApp.is_mouse_dragging = true;
@@ -364,12 +363,23 @@ function assemble(leftBlock) {
         let newMultiBlock = new MathApp.MultiBlock(newPos,sizes,names,size);
         
     }
+    else if (MathApp.selected_block.type == MathApp.block_types.SYMBOL && leftBlock.type == MathApp.block_types.MULTIBLOCK) {
+        console.log("yes");
+        let sizes = [];
+        let names = [];
+
+        sizes.push(leftBlock.size);
+        sizes.push(MathApp.selected_block.size);
+        names.push(leftBlock.name);
+        names.push(MathApp.selected_block.name);
+    }
     
 }
 
 // position : 시작 위치 받음, size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
 MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     MathApp.Block.call(this,position,size);
+    this.size = size;
     this.type = MathApp.block_types.MULTIBLOCK;    
     this.position = position;
     this.sizes = sizes;
@@ -390,9 +400,6 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
             let newPos = Pos;
 
             newPos.x +=  w * i;                       
-
-            console.log(w);
-            console.log(h);
 
             let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
            
