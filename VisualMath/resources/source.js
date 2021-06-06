@@ -7,6 +7,8 @@ const BUTTON_BOX_WIDTH = 300;
 
 let MathApp = {};
 
+let TextBoxText;
+
 MathApp.symbol_paths = {
         '+':    "add",
         '-':    "sub",
@@ -36,7 +38,7 @@ MathApp.symbol_paths = {
         "log":  "log",
         "sqrt": "sqrt",
         "pi":   "pi",
-        "number_e": "number_e",
+        "e": "number_e",
         "cross":    "cross",
         "dot":      "dotProduct",
         "det":      "det",
@@ -106,6 +108,7 @@ MathApp.initialize = function() {
     initOperationButtons();
     initSupportButtons();
     initVectorMatrixButtons();
+    initTextBox();
 }
 
 
@@ -118,7 +121,7 @@ MathApp.handleKeyPress = function(key) {
         };
         let position = {
             x : Math.random() * (this.canvas.width - size.width - BUTTON_BOX_WIDTH) + size.width/2,
-            y : Math.random() * (this.canvas.height - size.height) + size.height/2
+            y : Math.random() * 600 + size.height/2
         };
 
         let new_symbol = new MathApp.Symbol(position, size, key);
@@ -128,6 +131,7 @@ MathApp.handleKeyPress = function(key) {
 MathApp.handleMouseDown = function(window_p) {
     if(MathApp.isInCanvas(window_p))
     {
+        TextBoxText.text ="";
         let canvas_p = MathApp.transformToCanvasCoords(window_p);
         let mem_selected_block = MathApp.selected_block;
         // 일단 다 초기화. 선택블록도 초기화
@@ -258,7 +262,10 @@ MathApp.findBlockOnLeft = function(canvas_p) {
     {
         let block = this.blocks[i];
 
-        if( x >= block.position.x + block.size.width/2 && x <= block.position.x + block.size.width * 2  &&  y >= block.position.y - block.size.height/2 && y <= block.position.y + block.size.height/2 )
+        let symbol_number = block.numberOfSymbols;
+
+        if( x >= block.position.x +  SYMBOL_WIDTH/2 * (2*symbol_number-1)  && x <= block.position.x + SYMBOL_WIDTH/2 * (2*symbol_number+1) 
+             &&  y >= block.position.y - SYMBOL_HEIGHT/2 && y <= block.position.y + SYMBOL_HEIGHT/2 )
         {
             return block;
         }               
@@ -372,7 +379,6 @@ function assemble(leftBlock) {
         });
 
         size_array.push(MathApp.selected_block.size);
-      
 
         let size = { width : 0, height: 0 };
 
@@ -391,7 +397,7 @@ function assemble(leftBlock) {
 
         name_array.push(leftBlock.name);
 
-        MathApp.selected_block.names.forEach(i =>{
+        MathApp.selected_block.names.forEach(i =>{ 
             name_array.push(i);
         });
 
@@ -527,7 +533,154 @@ function disassemble() {
     
 }
 
-// position : 시작 위치 받음, size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
+function execute() {
+    
+    if (MathApp.selected_block.type == MathApp.block_types.SYMBOL) { 
+           
+        let name = MathApp.selected_block.name;
+        let newText;
+        try {
+
+            newText = parser.eval(name).toString();
+
+            var tokens = newText.split(' ');
+
+            if (tokens[0] == 'function') {
+                TextBoxText.text = tokens[0];
+                return;
+            }
+
+            TextBoxText.text = newText;
+
+            let newPos = {
+                x : MathApp.selected_block.position.x,
+                y: MathApp.selected_block.position.y + SYMBOL_HEIGHT + 10
+            }
+
+            let ssize = {
+                width: 0,
+                height: 0
+            }
+           if (newText.length == 1) {
+               makeSymbolAt(newText, ssize, newPos);
+           }
+           else if (newText.length > 1) {
+            makeMultiBlockAt(newText, newPos);
+           }
+
+        }catch (e) {
+            e += '';
+
+            if (newText != 'function') {
+                TextBoxText.text = e;
+            }
+        }
+        
+    } else if (MathApp.selected_block.type == MathApp.block_types.MULTIBLOCK) {
+        
+        let name="";
+        let newText;
+        let name_array = [], size_array = [];
+        let size = { width : 0, height : 0};
+
+        size.height = SYMBOL_HEIGHT;
+
+        MathApp.selected_block.names.forEach(i=>{
+            name += i;
+            name_array.push(i);
+            
+        });
+
+        MathApp.selected_block.sizes.forEach(i=> {
+            size_array.push(i);
+            size.width += i.width;            
+        });
+
+        //console.log(name);
+
+        try {
+            newText = parser.eval(name).toString();
+            var tokens = newText.split(' ');
+
+            if (tokens[0] == 'function') {
+                TextBoxText.text = tokens[0];
+                return;
+            }
+
+            TextBoxText.text = newText;
+            
+
+            let newPos = { x : 0 , y : 0 };
+            
+            newPos.x += MathApp.selected_block.position.x;
+            newPos.y += MathApp.selected_block.position.y + SYMBOL_HEIGHT + 10;
+
+
+
+            if (newText.length == 1) {
+                let ssize = {
+                    width : 0,
+                    height: 0
+                };
+
+                makeSymbolAt(newText, ssize, newPos);
+            }
+            else if (newText.length > 1) {
+                makeMultiBlockAt(newText, newPos);
+            }
+            
+
+            /*
+            let newMultiBlock = new MathApp.MultiBlock(newPos, size_array, name_array, size);
+            */
+
+        } catch (e) {
+            e += '';
+
+            if (newText != 'function') {
+                TextBoxText.text = e;
+            }
+        }
+    }
+
+}
+
+function  makeMultiBlockAt(newText, position) {
+   
+    let char_array = [];
+    let size_array = [];
+
+    let size = {
+        width : 0,
+        height: 0
+    };
+
+    let setSize = {
+        width : SYMBOL_WIDTH,
+        height: SYMBOL_HEIGHT
+    };
+
+    for (var index = 0; index < newText.length ; index++) {
+        let tempChar = newText.charAt(index);
+        console.log(tempChar);
+        char_array.push(tempChar);
+
+        let newSize = {
+            width: setSize.width,
+            height: setSize.height
+        };
+
+        size.width += setSize.width;
+        size.height += setSize.height;
+
+        size_array.push(newSize);
+    }
+
+    let newMultiBlock = new MathApp.MultiBlock(position, size_array, char_array,size);
+
+}
+
+// position : 시작 위치 , size : 모든 심볼들의 size를 배열로 받음 , names : 모든 심볼들의 이름을 배열로 받음
 MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     MathApp.Block.call(this,position,size);
     this.size = size;
@@ -577,6 +730,7 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
             }, {               
                 left: newPos.x - 37/2,
                 top : newPos.y - 23,
+                selectable: false
             });
 
             let background = new fabric.Rect({
@@ -747,6 +901,10 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
             duplication();
             break;
         }
+        case "Execute" : {
+            execute();
+            break;
+        }
         case "sin" : {
             makeSymbol("sin");
             break;
@@ -780,7 +938,7 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
             break;
         }
         case "e" : {
-            makeSymbol("number_e");
+            makeSymbol("e");
             break;
         }
         case "Cross" : {
@@ -819,46 +977,37 @@ function makeSymbol(key, ssize) {
     };
     let position = {
         x : Math.random() * (MathApp.canvas.width - size.width - BUTTON_BOX_WIDTH) + size.width/2,
-        y : Math.random() * (MathApp.canvas.height - size.height) + size.height/2
+        y : Math.random() * 600 + size.height/2
     };
 
     let new_symbol = new MathApp.Symbol(position, size, key);
 }
 
+function makeSymbolAt(key, ssize, position) {
+
+    if (ssize == null || ssize == undefined) {
+        ssize = { width : 0, height: 0};
+    }
+
+    let size = {
+        width : SYMBOL_WIDTH + ssize.width,
+        height : SYMBOL_HEIGHT + ssize.height
+    };   
+
+    let new_symbol = new MathApp.Symbol(position, size, key);
+}
 //
 function initOperationButtons() {
 
-    let size = {
-        width : 120,
-        height: 50
-    };
+    let size = { width : 120, height: 50 };
 
     let position = [];
     
-    let position0 = {
-        x: 900,
-        y: 0
-    }
-
-    let position1 = {
-        x: 950,
-        y: 50
-    }
-
-    let position2 = {
-        x: 950,
-        y: 120
-    }
-
-    let position3 = {
-        x : 950,
-        y : 190
-    }
-
-    let position4 = {
-        x : 950,
-        y : 260
-    }
+    let position0 = { x: 900, y: 0 }
+    let position1 = { x: 950, y: 50 }
+    let position2 = { x: 950, y: 120 }
+    let position3 = { x: 950, y: 190 }
+    let position4 = { x: 950, y: 260 }
 
     position.push(position0);
     position.push(position1);
@@ -866,9 +1015,7 @@ function initOperationButtons() {
     position.push(position3);
     position.push(position4);
 
-    let positioning = {
-        x: -30 , y : 20
-    }
+    let positioning = { x : 550 , y : 20 }
 
     for (var i = 0 ; i < position.length ; i++) {
         position[i].x += positioning.x;
@@ -887,9 +1034,7 @@ function initOperationButtons() {
     
     let execute_button = new MathApp.Button(position4, size, "Execute",operation);
 
-
 }
-
 
 function initSupportButtons() {
 
@@ -901,14 +1046,14 @@ function initSupportButtons() {
 
     let position = [];
     
-    let position0 = { x:  910,  y : 340 }
-    let position1 = { x:  980,  y : 340 }
-    let position2 = { x:  910,  y : 410 }
-    let position3 = { x : 980,  y : 410 }
-    let position4 = { x : 910,  y : 480 }
-    let position5 = { x : 980,  y : 480 }
-    let position6 = { x : 910,  y : 560 }
-    let position7 = { x : 980,  y : 560 }
+    let position0 = { x:  910,  y : 390 }
+    let position1 = { x:  980,  y : 390 }
+    let position2 = { x:  910,  y : 450 }
+    let position3 = { x : 980,  y : 450 }
+    let position4 = { x : 910,  y : 510 }
+    let position5 = { x : 980,  y : 510 }
+    let position6 = { x : 910,  y : 570 }
+    let position7 = { x : 980,  y : 570 }
     let label_position1 = {x: 910, y : 320};
     let label_position2 = {x: 910, y : 340};
 
@@ -920,16 +1065,21 @@ function initSupportButtons() {
     position.push(position5);
     position.push(position6);
     position.push(position7);
-    //position.push(label_position);
-
+    
     let positioning = {
-        x: -30 , y : 40
+        x: 550 , y : 10
     }
 
     for (var i = 0 ; i < position.length ; i++) {
         position[i].x += positioning.x;
         position[i].y += positioning.y;
-    }    
+    }
+    
+    label_position1.x += positioning.x;
+    label_position1.y += positioning.y;
+    label_position2.x += positioning.x;
+    label_position2.y += positioning.y;
+
     
     let support_button = new MathApp.Text(label_position1, size, "Constant and ",15);
     let support_button2 = new MathApp.Text(label_position2 , size, "predefined functions",15);
@@ -958,15 +1108,17 @@ function initVectorMatrixButtons() {
     
     let support = MathApp.button_types.SUPPORT;
 
-    let size = { width : 100, height: 50 };
+    let size = { width : 150, height: 50 };
     let position = [];
-    let position0 = { x: 870, y : 620 }
-    let position1 = { x: 840, y : 680 }
-    let position2 = { x: 950, y : 680 }
-    let position3 = { x: 840, y : 740 }
-    let position4 = { x: 950, y : 740 }
-    let position5 = { x: 840, y : 800}
 
+    let position0 = { x: 870, y : 620 }
+
+    let position1 = { x: 910, y : 680 }
+    let position2 = { x: 910, y : 740 }
+    let position3 = { x: 910, y : 800 }
+    let position4 = { x: 910, y : 860 }
+    let position5 = { x: 910, y : 920}
+    
     position.push(position0);
     position.push(position1);
     position.push(position2);
@@ -975,24 +1127,25 @@ function initVectorMatrixButtons() {
     position.push(position5);
 
     let positioning = {
-        x: 0 , y : 30
+        x: 580 , y : 30
     }
 
     for (var i = 0 ; i < position.length ; i++) {
+        position[i].x += positioning.x;
         position[i].y += positioning.y;
     }    
 
     let operation_label = new MathApp.Text(position0, {width: 60, height: 50}, "Vector & Matrix Buttons",15);
 
-    let delete_button = new MathApp.Button(position1, size, "Cross", support );
+    let cross_button = new MathApp.Button(position1, size, "Cross", support );
    
-    let duplicate_button = new MathApp.Button(position2, size, "Dot Product",support);
+    let dotProduct_button = new MathApp.Button(position2, size, "Dot Product",support);
    
-    let disassemble_button = new MathApp.Button(position3, size, "Inverse",support);
+    let Inverse_button = new MathApp.Button(position3, size, "Inverse",support);
     
-    let execute_button = new MathApp.Button(position4, size, "Determinant",support);
+    let Det_button = new MathApp.Button(position4, size, "Determinant",support);
 
-    let multiply_button = new MathApp.Button(position5, size, "Multiply", support)
+    let Multiply_button = new MathApp.Button(position5, size, "Multiply", support)
 }
 
 MathApp.Text = function(position, size, name, fontSize) {    
@@ -1020,4 +1173,52 @@ $(document).ready(function() {
 });
 
 
+
+MathApp.TextBox = function (position, size) {
+
+    let background = new fabric.Rect({
+        left: position.x,
+        top: position.y,
+        width : size.width,
+        height : size.height,
+        fill:       "white",
+        stroke:     "black",
+        strokeWidth: 3,
+        selectable: false
+    });
+
+    let text = new fabric.Text("",{
+        left: position.x + 10,
+        top:    position.y + 10,
+        selectable: false,
+        fontFamily: 'System',
+        fontSize:   20,
+        fontWeight: 'bold',
+        textAlign:  "left",
+        stroke:     "black",
+        fill:       "black",
+        strokeWidth:    1
+    });
+
+    MathApp.canvas.add(background);
+    MathApp.canvas.add(text);
+
+    TextBoxText = text;    
+}
+
+function initTextBox() {
+
+    let position = {
+        x: 10,
+        y: 750
+    }
+
+    let size = {
+        width: 1300,
+        height: 220
+    }
+
+    let textbox = new MathApp.TextBox(position, size);
+
+}
 
