@@ -496,7 +496,6 @@ function disassemble() {
 
     let sBlock = MathApp.selected_block;
 
-    var starting_position = sBlock.position;
     var size_array = [];
     var name_array = [];
 
@@ -510,16 +509,21 @@ function disassemble() {
    
     sBlock.destroy();          
 
-   
-        /*             
-        if (index != 0) {
-            starting_position.x += size_array[index];
-        }
-        */
-        let new_symbol = new MathApp.Symbol(starting_position, size_array[0], name_array[0]);
-               
+    for (var index = 0; index < name_array.length ; index++) {
 
-    
+        var starting_position = {
+            x: sBlock.position.x,
+            y: sBlock.position.y
+        };
+        
+        for (var i = 0; i < index ; i++) {
+
+            starting_position.x += size_array[i].width;
+        }
+
+        let new_symbol = new MathApp.Symbol(starting_position, size_array[index], name_array[index]);
+
+    }
     
 }
 
@@ -547,7 +551,10 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
     for (var i = 0; i < names.length ; i++) {
         
         if (names[i] in MathApp.symbol_paths) 
-        {           
+        {
+            var img_w;
+            var img_h;
+
             let w = sizes[i].width;
             let h = sizes[i].height;
 
@@ -558,11 +565,16 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
             let path = "resources/" + MathApp.symbol_paths[names[i]] + ".jpg";
            
             fabric.Image.fromURL(path, function(img) {
-                img.scaleToWidth(37);
-                img.scaleToHeight(50);
+                img.scaleToWidth(w);
+                img.scaleToHeight(h);
+               
+                img_w = img.getScaledWidth();
+                img_h = img.getScaledHeight();
+
                 MathApp.canvas.add(img).renderAll();
                 block.visual_items.push(img);
-            }, {
+
+            }, {               
                 left: newPos.x - 37/2,
                 top : newPos.y - 23,
             });
@@ -610,57 +622,57 @@ MathApp.Symbol = function(position, size, name) {
     this.numberOfSymbols = 1;
     let block = this;
 
+    var img_w;
+    var img_h;
     if (name in MathApp.symbol_paths) 
     {       
 
         let path = "resources/" + MathApp.symbol_paths[name] + ".jpg";
         fabric.Image.fromURL(path, function(img) {
-            // (0) Background
-            let background = new fabric.Rect({
-                left: position.x - size.width/2,
-                top: position.y - size.height/2,
-                width: size.width,
-                height: size.height,
-                fill: "rgba(255,255,255,1)",
-                stroke: "rgba(0,0,0,0)",
-                selectable: false
-            });
-
+         
             // (1) Image
             img.scaleToWidth(size.width);
             img.scaleToHeight(size.height);
 
-            let img_w = img.getScaledWidth();
-            let img_h = img.getScaledHeight();
-
-            img.set({
-                left: position.x - img_w/2,
-                top: position.y - img_h/2,
-                selectable: false
-            });
-
-            // (2) Boundary
-            let boundary = new fabric.Rect({
-                left: position.x - size.width/2,
-                top: position.y - size.height/2,
-                width: size.width,
-                height: size.height,
-                fill: "rgba(0,0,0,0)",
-                stroke: "rgba(0,0,255,1)",
-                strokeWidth: 5,
-                selectable: false
-            });
-
-            MathApp.canvas.add(background);
-            MathApp.canvas.add(img).renderAll();
-            MathApp.canvas.add(boundary);
-
-            block.visual_items.push(background);
-            block.visual_items.push(img);
-            block.visual_items.push(boundary);
+            img_w = img.getScaledWidth();
+            img_h = img.getScaledHeight();
+           
+          
+            MathApp.canvas.add(img).renderAll();            
+            block.visual_items.push(img);           
+        } , {
+            left: position.x - 37/2,
+            top : position.y - 23,
+            selectable: false
         });
 
-      
+
+        let background = new fabric.Rect({
+            left: position.x - size.width/2,
+            top: position.y - size.height/2,
+            width: size.width,
+            height: size.height,
+            fill: "rgba(255,255,255,1)",
+            stroke: "rgba(0,0,0,0)",
+            selectable: false
+        });
+
+        let boundary = new fabric.Rect({
+            left: position.x - size.width/2,
+            top: position.y - size.height/2,
+            width: size.width,
+            height: size.height,
+            fill: "rgba(0,0,0,0)",
+            stroke: "rgba(0,0,255,1)",
+            strokeWidth: 5,
+            selectable: false
+        });
+
+        MathApp.canvas.add(background);
+        block.visual_items.push(background);
+
+        MathApp.canvas.add(boundary);
+        block.visual_items.push(boundary);
     }
 }
 
