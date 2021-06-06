@@ -43,7 +43,7 @@ MathApp.symbol_paths = {
         "dot":      "dotProduct",
         "det":      "det",
         "inv":      "inv",
-        "multiply": "multiply"
+        "multiply": "multiply"       
 
 };
 
@@ -108,6 +108,7 @@ MathApp.initialize = function() {
     initOperationButtons();
     initSupportButtons();
     initVectorMatrixButtons();
+    initClearButton();
     initTextBox();
 }
 
@@ -905,6 +906,10 @@ MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
             execute();
             break;
         }
+        case "Clear Screen" : {
+            clearScreen();
+            break;
+        }
         case "sin" : {
             makeSymbol("sin");
             break;
@@ -999,7 +1004,7 @@ function makeSymbolAt(key, ssize, position) {
 //
 function initOperationButtons() {
 
-    let size = { width : 120, height: 50 };
+    let size = { width : 150, height: 50 };
 
     let position = [];
     
@@ -1148,6 +1153,29 @@ function initVectorMatrixButtons() {
     let Multiply_button = new MathApp.Button(position5, size, "Multiply", support)
 }
 
+function initClearButton() {
+
+    let support = MathApp.button_types.SUPPORT;
+    let size = { width : 170, height: 60};
+    let position = {x : 1310, y: 800};
+
+
+    let clear_button = new MathApp.Button(position, size, "Clear Screen", support);
+}
+
+
+function clearScreen() {
+    
+    MathApp.blocks.forEach(i => {
+        if (i.type == MathApp.block_types.SYMBOL || i.type == MathApp.block_types.MULTIBLOCK) {
+            setTimeout(function() {
+                i.destroy();
+            },50);
+        }
+    });
+
+}
+
 MathApp.Text = function(position, size, name, fontSize) {    
     
     this.name = name;  
@@ -1214,11 +1242,9 @@ function initTextBox() {
     }
 
     let size = {
-        width: 1300,
+        width: 1200,
         height: 220
     }
-
     let textbox = new MathApp.TextBox(position, size);
-
 }
 
