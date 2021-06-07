@@ -1247,16 +1247,3 @@ function initTextBox() {
     }
     let textbox = new MathApp.TextBox(position, size);
 }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-
-
-function testGirhunRevert() {
-    
-}
-=======
->>>>>>> parent of 740578f (Update source.js)
-=======
->>>>>>> parent of 740578f (Update source.js)
