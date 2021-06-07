@@ -246,7 +246,7 @@ MathApp.findBlockOn = function(canvas_p) {
     {
         let block = this.blocks[i];
         
-        if( x >= block.position.x - 25 && x <= block.position.x + block.size.width - 25 &&
+        if( x >= block.position.x - block.size.width/2 && x <= block.position.x + block.size.width - 25 &&
             y >= block.position.y - 25  && y <= block.position.y + 25 )
         {
             return block;
