@@ -739,10 +739,13 @@ MathApp.MultiBlock = function (position, sizes = [], names = [], size) {
 
             block.visual_items.push(background);
             block.visual_items.push(boundary);
-            
+                               
+
+            //"github test"
         }
     }  
     
+   
        
 }
 
@@ -762,8 +765,8 @@ MathApp.Symbol = function(position, size, name) {
     {       
 
         let path = "resources/" + MathApp.symbol_paths[name] + ".jpg";
+
         fabric.Image.fromURL(path, function(img) {
-         
             // (1) Image
             img.scaleToWidth(size.width);
             img.scaleToHeight(size.height);
