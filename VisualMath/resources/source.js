@@ -458,6 +458,8 @@ function duplication() {
 
     let s_block = MathApp.selected_block;
 
+    console.log(s_block.type);
+
     let new_position = {
         x: s_block.position.x,
         y: s_block.position.y
@@ -497,9 +499,7 @@ function duplication() {
 }
 
 function disassemble() {
-    if (MathApp.selected_block == null || MathApp.selected_block == undefined 
-        || MathApp.selected_block.type == MathApp.block_types.SYMBOL) 
-    return;
+    if (MathApp.selected_block == null || MathApp.selected_block == undefined || MathApp.selected_block.type == MathApp.block_types.SYMBOL) return;
 
     let sBlock = MathApp.selected_block;
 
@@ -581,11 +581,24 @@ function execute() {
         
         let name="";
         let newText;
-       
+        let name_array = [], size_array = [];
+        let size = { width : 0, height : 0};
+
+        size.height = SYMBOL_HEIGHT;
+
         MathApp.selected_block.names.forEach(i=>{
-            name += i;        
+            name += i;
+            name_array.push(i);
+            
         });
-      
+
+        MathApp.selected_block.sizes.forEach(i=> {
+            size_array.push(i);
+            size.width += i.width;            
+        });
+
+        //console.log(name);
+
         try {
             newText = parser.eval(name).toString();
             var tokens = newText.split(' ');
@@ -596,11 +609,14 @@ function execute() {
             }
 
             TextBoxText.text = newText;
+            
 
             let newPos = { x : 0 , y : 0 };
             
             newPos.x += MathApp.selected_block.position.x;
             newPos.y += MathApp.selected_block.position.y + SYMBOL_HEIGHT + 10;
+
+
 
             if (newText.length == 1) {
                 let ssize = {
@@ -613,6 +629,11 @@ function execute() {
             else if (newText.length > 1) {
                 makeMultiBlockAt(newText, newPos);
             }
+            
+
+            /*
+            let newMultiBlock = new MathApp.MultiBlock(newPos, size_array, name_array, size);
+            */
 
         } catch (e) {
             e += '';
@@ -864,7 +885,7 @@ MathApp.Button = function(position, size, name, opType) {
 
 MathApp.Button.prototype = Object.create(MathApp.Block.prototype);
 
-MathApp.Button.prototype.buttonOperation = function(mem_selected_block) {
+MathApp.Button.prototype.buttonOperation = function( mem_selected_block) {
 
     let op = this.name;   
 
