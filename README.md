@@ -12,7 +12,7 @@
 
 <br>
 
-    Load the main.html file in your browser to start
+    Open the WebCalculator directory and load the main.html file in your browser to start.
     
     Then press keys or click function buttons on the right to make blocks in your screen
 <br>
